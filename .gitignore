@@ -1,0 +1,30 @@
+# Virtual environment
+.venv/
+
+# IDE
+.idea/
+
+# Dataset (large files, re-downloadable)
+Basketball-Players-25/
+
+# Training runs and outputs
+runs/
+train2/
+
+# Model weights (large binary files)
+models/*.pt
+
+# Input/output videos
+input_videos/
+output_videos/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# OS
+Thumbs.db
+.DS_Store
