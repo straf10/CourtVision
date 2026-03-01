@@ -2,6 +2,7 @@ from ultralytics import YOLO
 import sys 
 import supervision as sv
 import numpy as np
+import pandas as pd
 
 sys.path.append("../")
 from utils import read_stub, save_stub
@@ -57,7 +58,7 @@ class BallTracker:
                         max_confidence = confidence
 
             if chosen_bbox is not None:
-                tracks[frame_num]["ball"] = {"bbox": chosen_bbox}
+                tracks[frame_num][1] = {"bbox": chosen_bbox}
 
         save_stub(stub_path, tracks)
 
@@ -93,5 +94,14 @@ class BallTracker:
 
             return ball_positions
                 
+    def interpolate_ball_positions(self, ball_positions):
+        ball_posititions = [ x.get(1, {}).get("bbox", []) for x in ball_positions]
+        df_ball_positions = pd.DataFrame(ball_posititions, columns=["x1", "y1", "x2", "y2"])
 
+        # Interpolate missing values
+        df_ball_positions = df_ball_positions.interpolate()
+        df_ball_positions = df_ball_positions.bfill() # backfill missing values
 
+        ball_positions = [{1: {"bbox": x}} for x in df_ball_positions.to_numpy().tolist()]
+
+        return ball_positions

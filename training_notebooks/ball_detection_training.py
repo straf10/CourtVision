@@ -41,10 +41,10 @@ for folder in folders_to_move:
 yaml_path = os.path.join(dataset_dir, 'data.yaml')
 
 data = {
-    'path': dataset_dir,  
-    'train': 'train/images',                  
-    'val': 'valid/images',                    
-    'names': {0: 'player', 1: 'referee', 2: 'ball'} 
+    'path': dataset_dir,
+    'train': 'train/images',
+    'val': 'valid/images',
+    'names': {0: 'player', 1: 'referee', 2: 'ball'}
 }
 
 try:
@@ -61,15 +61,45 @@ with open(yaml_path, 'w') as f:
     yaml.dump(data, f)
 print("✅ Το data.yaml ενημερώθηκε σωστά.")
 
-# 4. Εκκίνηση της Εκπαίδευσης μέσω της Python API (Αντί για την εντολή !yolo)
-model = YOLO('yolo12m.pt') # Θα κατεβάσει αυτόματα τα pre-trained weights
+# 4. Εκπαίδευση — βελτιστοποιημένη για RTX 3090 (24GB VRAM)
+model = YOLO('yolo12l.pt')
 
 results = model.train(
     data=yaml_path,
-    epochs=300,
-    imgsz=640,
+    epochs=500,
+    patience=80,
+    imgsz=1280,
+    batch=4,
     plots=True,
-    batch=16,
-    project=current_dir, # Θα αποθηκεύσει τα αποτελέσματα στον τρέχοντα φάκελο
-    name="train2"
+
+    # Optimizer
+    optimizer="AdamW",
+    lr0=0.0005,
+    lrf=0.01,
+    weight_decay=0.001,
+    warmup_epochs=20,
+    cos_lr=True,
+
+    # Augmentation — aggressive to compensate for few Ball samples
+    augment=True,
+    mosaic=1.0,
+    close_mosaic=30,
+    mixup=0.15,
+    copy_paste=0.2,
+    scale=0.7,
+    fliplr=0.5,
+    hsv_h=0.02,
+    hsv_s=0.7,
+    hsv_v=0.5,
+    degrees=10.0,
+    translate=0.2,
+    erasing=0.1,
+
+    # Performance — utilize 10-core CPU and 128GB RAM
+    workers=10,
+    amp=True,
+    cache="ram",
+
+    project=current_dir,
+    name="train3"
 )
