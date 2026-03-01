@@ -15,6 +15,9 @@ def main():
     player_tracks = player_tracker.get_object_tracks(video_frames, read_from_stub = True, stub_path = "stubs/player_tracks.pkl")
     ball_tracks = ball_tracker.get_object_tracks(video_frames, read_from_stub = True, stub_path = "stubs/ball_tracks.pkl")
 
+    # Remove wrong detections
+    ball_tracks = ball_tracker.remove_wrong_detections(ball_tracks)
+
     # Draw output
     # Initialize the player tracks drawer
     player_tracks_drawer = PlayerTracksDrawer()
