@@ -1,4 +1,4 @@
-# Basketball Video Analysis
+# CourtVision
 
 Analyze basketball footage with automated detection of players, ball, team assignment, and more. This repository integrates object tracking, zero-shot classification, and custom keypoint detection for a fully annotated basketball game experience.
 
