@@ -22,6 +22,12 @@ output_videos/
 __pycache__/
 *.pyc
 
+# Stubs (cached pickle files, machine-specific)
+stubs/
+
+# Training data and outputs
+data/
+
 # Environment variables
 .env
 
