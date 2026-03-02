@@ -9,7 +9,7 @@ def main():
 
     # Initialize the player tracker
     player_tracker = PlayerTracker("models/player_detector_model.pt")
-    ball_tracker = BallTracker("models/ball_detector_model.pt")
+    ball_tracker = BallTracker("models/best.pt")
 
     # Run the player tracker
     player_tracks = player_tracker.get_object_tracks(video_frames, read_from_stub = True, stub_path = "stubs/player_tracks.pkl")
