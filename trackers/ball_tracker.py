@@ -1,10 +1,9 @@
 from ultralytics import YOLO
-import sys 
 import supervision as sv
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
-sys.path.append("../")
 from utils import read_stub, save_stub
 
 class BallTracker:
@@ -16,10 +15,10 @@ class BallTracker:
     def detect_frames(self, frames):
         batch_size = 20
         detections = []
-        for i in range(0, len(frames), batch_size):
+        for i in tqdm(range(0, len(frames), batch_size), desc="Detecting ball"):
             batch_frames = frames[i:i+batch_size]
             batch_detections = self.model.predict(batch_frames, conf=0.5)
-            detections+=batch_detections
+            detections += batch_detections
         return detections
 
     def get_object_tracks(self, frames, read_from_stub = False, stub_path = None):
@@ -95,8 +94,8 @@ class BallTracker:
             return ball_positions
                 
     def interpolate_ball_positions(self, ball_positions):
-        ball_posititions = [ x.get(1, {}).get("bbox", []) for x in ball_positions]
-        df_ball_positions = pd.DataFrame(ball_posititions, columns=["x1", "y1", "x2", "y2"])
+        ball_positions = [ x.get(1, {}).get("bbox", []) for x in ball_positions]
+        df_ball_positions = pd.DataFrame(ball_positions, columns=["x1", "y1", "x2", "y2"])
 
         # Interpolate missing values
         df_ball_positions = df_ball_positions.interpolate()

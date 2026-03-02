@@ -18,7 +18,7 @@ class BallTracksDrawer:
                 if bbox is  None:
                     continue
                 
-                output_frame = draw_triangle(frame, bbox, self.ball_pointer_color)
+                output_frame = draw_triangle(output_frame, bbox, self.ball_pointer_color)
 
             output_video_frames.append(output_frame)
         return output_video_frames

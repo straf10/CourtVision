@@ -1,8 +1,5 @@
 import cv2
-import sys
 import numpy as np
-
-sys.path.append("../")
 
 from utils import get_bbox_center, get_bbox_width
 
