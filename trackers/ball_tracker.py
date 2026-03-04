@@ -10,7 +10,6 @@ class BallTracker:
 
     def __init__(self, model_path):
         self.model = YOLO(model_path)
-        self.tracker = sv.ByteTrack()
 
     def detect_frames(self, frames):
         batch_size = 20
@@ -40,13 +39,11 @@ class BallTracker:
 
             detection_supervision = sv.Detections.from_ultralytics(detection)
 
-            detection_with_tracks = self.tracker.update_with_detections(detection_supervision)
-
             tracks.append({})
             chosen_bbox = None
             max_confidence = 0
 
-            for frame_detection in detection_with_tracks:
+            for frame_detection in detection_supervision:
                 bbox = frame_detection[0].tolist()
                 cls_id = frame_detection[3]
                 confidence = frame_detection[2]
@@ -63,35 +60,32 @@ class BallTracker:
 
         return tracks
 
-    def remove_wrong_detections(self, ball_positions):
-            
-            max_allowed_distance = 25 # pixels
-            last_good_frame_index = -1
+    def remove_wrong_detections(self, ball_positions, max_distance=100, window=5):
+        ball_positions_not_empty = [i for i, x in enumerate(ball_positions) if x]
 
-            for i in range(len(ball_positions)):
-                current_bbox = ball_positions[i].get(1, {}).get("bbox", [])
+        if len(ball_positions_not_empty) < 2:
+            return ball_positions
 
-                if len(current_bbox) == 0:
-                    continue
+        last_good_frame_index = ball_positions_not_empty[0]
 
-                if last_good_frame_index == -1:
-                    last_good_frame_index = i
-                    continue
+        for i in ball_positions_not_empty[1:]:
+            frames_since_last = i - last_good_frame_index
+            adjusted_max_distance = max_distance * max(1, frames_since_last / window)
 
-                last_good_box = ball_positions[last_good_frame_index].get(1, {}).get("bbox", [])
-                frame_gap = i - last_good_frame_index
-                adjusted_max_distance = max_allowed_distance * frame_gap
+            current_bbox = ball_positions[i].get(1, {}).get("bbox", [])
+            last_bbox = ball_positions[last_good_frame_index].get(1, {}).get("bbox", [])
 
-                # Calculate the distance between the current and last good box
-                distance = np.linalg.norm(np.array(last_good_box[:2]) - np.array(current_bbox[:2]))
+            if current_bbox and last_bbox:
+                current_center = np.array([(current_bbox[0]+current_bbox[2])/2, (current_bbox[1]+current_bbox[3])/2])
+                last_center = np.array([(last_bbox[0]+last_bbox[2])/2, (last_bbox[1]+last_bbox[3])/2])
+                distance = np.linalg.norm(current_center - last_center)
 
                 if distance > adjusted_max_distance:
                     ball_positions[i] = {}
-                    
-                else :
+                else:
                     last_good_frame_index = i
 
-            return ball_positions
+        return ball_positions
                 
     def interpolate_ball_positions(self, ball_positions):
         ball_positions = [ x.get(1, {}).get("bbox", []) for x in ball_positions]

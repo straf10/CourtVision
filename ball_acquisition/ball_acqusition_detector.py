@@ -5,7 +5,7 @@ from utils import measure_distance, get_center_of_bbox
 class BallAcquisitionDetector:
     def __init__(self):
         self.possession_threshold = 50
-        self.min_frames = 13
+        self.min_frames = 11
         self.containment_threshold = 0.8
 
     def get_key_basketball_player_assignment_points(self, player_bbox, ball_center):
@@ -26,14 +26,17 @@ class BallAcquisitionDetector:
             output_points.append((ball_center_x, y1))
             output_points.append((ball_center_x, y2))
 
-        output_points += [(x1, y1), 
-        (x1, y2), 
-        (x2, y1),
-        (x2, y2), 
-        (x1 + width // 2, y1), 
-        (x1 + width // 2, y2),
-        (x1, y1 + height // 2), # left corner
-        (x2, y1 + height // 2), # right corner
+        output_points += [
+            (x1 + width // 2, y1),
+            (x2, y1),
+            (x1, y1),
+            (x2, y1 + height // 2),
+            (x1, y1 + height // 2),
+            (x1 + width // 2, y1 + height // 2),
+            (x2, y2),
+            (x1, y2),
+            (x1 + width // 2, y2),
+            (x1 + width // 2, y1 + height // 3),
         ]
 
         return output_points
@@ -82,9 +85,9 @@ class BallAcquisitionDetector:
             min_distance = self.find_minimum_distance_to_ball(ball_center, player_bbox)
 
             if containment > self.containment_threshold:
-                high_containment_players.append((player_id, containment, min_distance))
+                high_containment_players.append((player_id, min_distance))
             else:
-                regular_distance_players.append((player_id, containment, min_distance))
+                regular_distance_players.append((player_id, min_distance))
 
         # First priority is high containment players
         if high_containment_players:

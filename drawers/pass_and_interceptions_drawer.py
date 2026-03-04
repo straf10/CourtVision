@@ -63,7 +63,7 @@ class PassAndInterceptionsDrawer:
 
         team_1_passes, team_2_passes, team_1_interceptions, team_2_interceptions = self.get_stats(passes_till_frame, interceptions_till_frame)
 
-        cv2.putText(frame, f"Team 1 - Passes: {team_1_passes}Interceptions: {team_1_interceptions} ", (text_x, text_y1), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), font_thickness)
+        cv2.putText(frame, f"Team 1 - Passes: {team_1_passes} Interceptions: {team_1_interceptions}", (text_x, text_y1), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), font_thickness)
         cv2.putText(frame, f"Team 2 - Passes: {team_2_passes} Interceptions: {team_2_interceptions}", (text_x, text_y2), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), font_thickness)
         
         return frame
