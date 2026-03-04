@@ -1,13 +1,14 @@
 import os
 from utils import read_video, save_video
 from trackers import PlayerTracker, BallTracker
-from drawers import PlayerTracksDrawer, BallTracksDrawer, TeamBallControlDrawer
+from drawers import PlayerTracksDrawer, BallTracksDrawer, TeamBallControlDrawer, PassAndInterceptionsDrawer
 from team_assigner import TeamAssigner
 from ball_acquisition import BallAcquisitionDetector
+from pass_and_interception import PassAndInterceptionDetector
 
-INPUT_VIDEO = "input_videos/video_1.mp4"
-PLAYER_MODEL = "models/best.pt"
-BALL_MODEL = "models/best.pt"
+INPUT_VIDEO = "input_videos/video_2.mp4"
+PLAYER_MODEL = "models/player_detector_pretained.pt"
+BALL_MODEL = "models/ball_detector_pretrained.pt"
 OUTPUT_VIDEO = "output_videos/output_video.avi"
 
 def validate_paths(*paths):
@@ -39,17 +40,24 @@ def main():
     ball_acquisition_detector = BallAcquisitionDetector()
     ball_acquisition = ball_acquisition_detector.detect_ball_possession(player_tracks, ball_tracks)
 
-    print(ball_acquisition)
+    # Detect Passes and Interceptions
+    pass_and_interception_detector = PassAndInterceptionDetector()
+    passes = pass_and_interception_detector.detect_passes(ball_acquisition, player_assignment)
+    interceptions = pass_and_interception_detector.detect_interceptions(ball_acquisition, player_assignment)
     
     # Draw Player Tracks
     player_tracks_drawer = PlayerTracksDrawer()
     ball_tracks_drawer = BallTracksDrawer()
     team_ball_control_drawer = TeamBallControlDrawer()
+    pass_and_interceptions_drawer = PassAndInterceptionsDrawer()
 
     output_video_frames = player_tracks_drawer.draw(video_frames, player_tracks, player_assignment, ball_acquisition)
 
     # Draw Team Ball Control
     output_video_frames = team_ball_control_drawer.draw(output_video_frames, player_assignment, ball_acquisition)
+
+    # Draw Passes and Interceptions
+    output_video_frames = pass_and_interceptions_drawer.draw(output_video_frames, passes, interceptions)
 
     # Save Video
     output_video_frames = ball_tracks_drawer.draw(output_video_frames, ball_tracks)

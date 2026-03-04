@@ -9,65 +9,54 @@ load_dotenv()
 
 # 1. Κατέβασμα του Dataset από το Roboflow
 rf = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
-project = rf.workspace("roboflow-universe-projects").project("basketball-players-fy4c2")
-version = project.version(25)
-dataset = version.download("yolov12")
+project = rf.workspace("fyp-3bwmg").project("reloc2-den7l")
+version = project.version(1)
+dataset = version.download("yolov8")
 
-# Ορίζουμε το τρέχον path του φακέλου μας αντί για το /content/
+# 2. Χρήση του dataset.location για σωστό path
 current_dir = os.getcwd()
-dataset_dir = os.path.join(current_dir, "Basketball-Players-25")
-nested_dir = os.path.join(dataset_dir, "Basketball-Players-25")
+dataset_dir = dataset.location
 
-# 2. Μετακίνηση Φακέλων (αντιμετώπιση του bug με το διπλό φάκελο)
-try:
-    shutil.move(os.path.join(dataset_dir, "train"), os.path.join(nested_dir, "train"))
-    shutil.move(os.path.join(dataset_dir, "valid"), os.path.join(nested_dir, "valid"))
-except Exception as e:
-    pass # Αν έχουν ήδη μετακινηθεί, προχωράμε
+# Αντιμετώπιση του bug με διπλό φάκελο αν υπάρχει
+dataset_name = os.path.basename(dataset_dir)
+nested_dir = os.path.join(dataset_dir, dataset_name)
 
-folders_to_move = ['train', 'valid', 'test']
-
-for folder in folders_to_move:
-    src_path = os.path.join(nested_dir, folder)
-    dst_path = os.path.join(dataset_dir, folder)
-
-    if os.path.exists(src_path):
-        if os.path.exists(dst_path):
-            shutil.rmtree(dst_path)
-        shutil.move(src_path, dataset_dir)
-        print(f"✅ Μετακινήθηκε ο φάκελος: {folder}")
+if os.path.isdir(nested_dir):
+    for folder in ['train', 'valid', 'test']:
+        src_path = os.path.join(nested_dir, folder)
+        dst_path = os.path.join(dataset_dir, folder)
+        if os.path.exists(src_path):
+            if os.path.exists(dst_path):
+                shutil.rmtree(dst_path)
+            shutil.move(src_path, dataset_dir)
+            print(f"✅ Μετακινήθηκε ο φάκελος: {folder}")
+    shutil.rmtree(nested_dir, ignore_errors=True)
 
 # 3. Ενημέρωση του data.yaml
 yaml_path = os.path.join(dataset_dir, 'data.yaml')
+
+with open(yaml_path, 'r') as f:
+    old_data = yaml.safe_load(f)
 
 data = {
     'path': dataset_dir,
     'train': 'train/images',
     'val': 'valid/images',
-    'names': {0: 'player', 1: 'referee', 2: 'ball'}
+    'names': old_data.get('names', {0: 'ball'}),
+    'nc': old_data.get('nc', 1),
 }
-
-try:
-    with open(yaml_path, 'r') as f:
-        old_data = yaml.safe_load(f)
-        if 'names' in old_data:
-            data['names'] = old_data['names']
-        if 'nc' in old_data:
-            data['nc'] = old_data['nc']
-except:
-    pass
 
 with open(yaml_path, 'w') as f:
     yaml.dump(data, f)
-print("✅ Το data.yaml ενημερώθηκε σωστά.")
+print(f"✅ Το data.yaml ενημερώθηκε — classes: {data['names']}")
 
-# 4. Εκπαίδευση — βελτιστοποιημένη για RTX 3090 (24GB VRAM)
+# 4. Εκπαίδευση — YOLOv12l, βελτιστοποιημένη για RTX 3090 (24GB VRAM)
 model = YOLO('yolo12l.pt')
 
 results = model.train(
     data=yaml_path,
-    epochs=500,
-    patience=80,
+    epochs=1000,
+    patience=100,
     imgsz=1280,
     batch=4,
     plots=True,
@@ -80,10 +69,10 @@ results = model.train(
     warmup_epochs=20,
     cos_lr=True,
 
-    # Augmentation — aggressive to compensate for few Ball samples
+    # Augmentation
     augment=True,
     mosaic=1.0,
-    close_mosaic=30,
+    close_mosaic=50,
     mixup=0.15,
     copy_paste=0.2,
     scale=0.7,
@@ -101,5 +90,5 @@ results = model.train(
     cache="ram",
 
     project=current_dir,
-    name="train3"
+    name="ball_detection_v1"
 )
